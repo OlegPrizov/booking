@@ -1,0 +1,46 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: api-gateway
+
+  cloud:
+    gateway:
+      discovery:
+        locator:
+          enabled: false
+      routes:
+        - id: booking-service
+          uri: lb://booking-service
+          predicates:
+            - Path=/api/bookings/**, /api/user/**, /api/booking/**, /api/bookings
+          filters:
+            - StripPrefix=0
+
+        - id: hotel-service
+          uri: lb://hotel-service
+          predicates:
+            - Path=/api/hotels/**, /api/rooms/**
+          filters:
+            - StripPrefix=0
+
+        - id: block-room-release
+          uri: no://op
+          predicates:
+            - Path=/api/rooms/*/release
+          filters:
+            - SetStatus=404
+
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: http://localhost:8761/eureka
+    fetchRegistry: true
+    registerWithEureka: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,gateway
